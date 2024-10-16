@@ -10,12 +10,11 @@ from fastapi.responses import (
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from typing import Annotated
 from datetime import timedelta
-import base64
 
 from api_server.schemas import UserLogin, UserSignup
 from api_server.services import UserService
 from api_server.repositories import UserRepo
-from api_server.depends import get_user_repository
+from api_server.depends import get_user_service
 from api_server.core import database
 
 router = APIRouter(
@@ -29,9 +28,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 @router.post("/login", status_code=status.HTTP_200_OK)
 async def login_user(
         user_login_data: Annotated[UserLogin, OAuth2PasswordRequestForm],
-        repo: Annotated[UserRepo, Depends(get_user_repository(database.get_async_session))],
+        service: Annotated[UserService, Depends(get_user_service(database.get_async_session))],
 ) -> JSONResponse:
-    service = UserService(repo)
     token = await service.login_user(user_data=user_login_data)
     response = JSONResponse(
         status_code=status.HTTP_200_OK,
@@ -51,10 +49,9 @@ async def login_user(
 
 @router.post("/generate_code", status_code=status.HTTP_200_OK)
 async def generate_code(
-        user_create_data: Annotated[UserSignup, OAuth2PasswordBearer],
-        repo: Annotated[UserRepo, Depends(get_user_repository(database.get_async_session))]
+        user_create_data: Annotated[UserSignup, oauth2_scheme],
+        service: Annotated[UserService, Depends(get_user_service(database.get_async_session))],
 ) -> JSONResponse:
-    service = UserService(repo)
     code = await service.generate_registration_code(user_data=user_create_data)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
@@ -70,9 +67,8 @@ async def generate_code(
 async def complete_signup(
         tg_chat_id: Annotated[int, Query()],
         code: Annotated[str, Query()],
-        repo: Annotated[UserRepo, Depends(get_user_repository(database.get_async_session))]
+        service: Annotated[UserService, Depends(get_user_service(database.get_async_session))],
 ) -> JSONResponse:
-    service = UserService(repo)
     await service.activate_user(
         code=code,
         tg_chat_id=tg_chat_id,
