@@ -2,7 +2,7 @@ import jwt
 import datetime as dt
 
 from api_server.config import settings
-from api_server.exceptions import ExpiredTokenException, InvalidTokenException
+from api_server.exceptions import InvalidTokenException
 
 
 class JwtTool:
