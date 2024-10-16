@@ -14,7 +14,7 @@ class UsersORM(Base):
     tg_chat_id: unique id of the chat between the bot and the user for sending notifications
     """
 
-    __tablename__ = 'messages'
+    __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(25), nullable=False, unique=True)
