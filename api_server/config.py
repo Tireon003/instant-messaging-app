@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     API_HOST: str
     API_PORT: int
 
+    JWT_SECRET: str
+
     @property
     def db_url(self):
         return (f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@"
