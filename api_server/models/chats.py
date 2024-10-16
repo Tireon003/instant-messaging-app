@@ -9,7 +9,7 @@ class ChatsORM(Base):
     """
     #todo дописать доку
     """
-    __table_name__ = 'chats'
+    __tablename__ = 'chats'
 
     id:  Mapped[int] = mapped_column(primary_key=True)
     user_1: Mapped[int] = mapped_column(
