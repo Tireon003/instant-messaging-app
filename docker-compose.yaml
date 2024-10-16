@@ -1,0 +1,44 @@
+services:
+  redis_cache:
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+    restart: on-failure
+    env_file: .env
+
+  msg_db:
+    image: postgres:17.0-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    ports:
+       - ${DB_PORT}:5432
+    restart: on-failure
+    env_file: .env
+    volumes:
+      - ./pinger_db:/var/lib/postgresql/data
+
+  api_server:
+    build:
+      context: .
+      dockerfile: api_server/Dockerfile
+    ports:
+      - "8777:8777"
+    depends_on:
+      - redis_cache
+      - msg_db
+    restart: on-failure
+    env_file: .env
+
+  bot_notificator:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    depends_on:
+      - api_server
+    restart: on-failure
+    env_file: .env
+
+volumes:
+  msg_db:
