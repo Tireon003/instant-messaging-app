@@ -16,12 +16,12 @@ from api_server.utils import HashingTool, JwtTool
 class UserService:
 
     def __init__(self, user_repository: UserRepo) -> None:
+        self.redis = Redis()
         self.repo = user_repository
 
-    @staticmethod
-    def set_user_online(user_id):
-        redis = Redis.create_redis_connection()
-        redis.setex(
+    async def set_user_online(self, user_id):
+        redis = await self.redis.get_connection()
+        await redis.setex(
             name=f"{user_id}:online",
             time=5,
             value=True,
@@ -39,7 +39,7 @@ class UserService:
             if not is_password_valid:
                 raise WrongPasswordException()
             else:
-                redis = Redis.create_redis_connection()
+                redis = await self.redis.get_connection()
                 payload = {
                     "sub": match_user.id,
                     "tg_chat_id": match_user.tg_chat_id,
@@ -60,7 +60,7 @@ class UserService:
             payload_json = user_data.model_dump_json()
             base64_code_bytes = base64.b64encode(payload_json)
             base64_code_str = base64_code_bytes.decode('utf-8')
-            redis = Redis.create_redis_connection()
+            redis = await self.redis.get_connection()
             await redis.setex(
                 name=base64_code_str,
                 time=600,
@@ -69,12 +69,13 @@ class UserService:
             return base64_code_str
 
     async def activate_user(self, code: str, tg_chat_id: int) -> None:
-        redis = Redis.create_redis_connection()
+        redis = await self.redis.get_connection()
+        # todo: проверить что tg_chat_id уникален в базе, чтобы не регистрировать больше 1 юзера с одинаковым tg_chat_id
         user_signup_data_json_str = await redis.get(code)
         if not user_signup_data_json_str:
             raise InvalidCodeException()
         else:
-            user_signup_data_dict = json.load(user_signup_data_json_str)
+            user_signup_data_dict = json.loads(user_signup_data_json_str)
             user_signup_data_dict.update(
                 {
                     "tg_chat_id": tg_chat_id,
