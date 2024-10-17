@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
 from api_server.config import settings
@@ -12,7 +12,10 @@ from api_server.exceptions import (
     InvalidCodeException,
 )
 
-allowed_origins = ["*"]
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 
 
 app = FastAPI(
@@ -21,7 +24,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
