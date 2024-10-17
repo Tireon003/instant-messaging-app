@@ -84,3 +84,9 @@ class UserService:
             user_create_schema = UserInsertToDB.model_validate(user_data_for_db)
             await self.repo.insert_user(user_create_schema)
             await redis.delete(code)
+
+    async def check_if_chat_id_used(self, tg_chat_id: int) -> bool:
+        user_matched_tg_chat_id = await self.repo.select_by_tg_chat_id(tg_chat_id)
+        if user_matched_tg_chat_id:
+            return True
+        return False
