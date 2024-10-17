@@ -18,3 +18,13 @@ class AuthApi:
                 if response.status == 201:
                     return True
                 return False
+
+    @staticmethod
+    async def check_chat_id(chat_id: int) -> bool:
+        async with aiohttp.ClientSession() as session:
+            params = [("tg_chat_id", chat_id)]
+            url = f"http://api_server:8777/api/auth/check_tg"
+            async with session.post(url, params=params) as response:
+                if response.status == 200:
+                    return False
+                return True
