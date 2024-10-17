@@ -58,7 +58,7 @@ class UserService:
             raise UserAlreadyExistException()
         else:
             payload_json = user_data.model_dump_json()
-            base64_code_bytes = base64.b64encode(payload_json)
+            base64_code_bytes = base64.b64encode(payload_json.encode('utf-8'))
             base64_code_str = base64_code_bytes.decode('utf-8')
             redis = await self.redis.get_connection()
             await redis.setex(
@@ -75,12 +75,12 @@ class UserService:
         if not user_signup_data_json_str:
             raise InvalidCodeException()
         else:
-            user_signup_data_dict = json.loads(user_signup_data_json_str)
-            user_signup_data_dict.update(
-                {
-                    "tg_chat_id": tg_chat_id,
-                }
-            )
-            user_create_schema = UserInsertToDB.model_validate(**user_signup_data_dict)
+            user_data = json.loads(user_signup_data_json_str)
+            user_data_for_db = {
+                "tg_chat_id": tg_chat_id,
+                "username": user_data["username"],
+                "hashed_password": HashingTool.encrypt(user_data["password"])
+            }
+            user_create_schema = UserInsertToDB.model_validate(user_data_for_db)
             await self.repo.insert_user(user_create_schema)
             await redis.delete(code)
