@@ -1,4 +1,4 @@
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.types import ReplyKeyboardRemove, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command, StateFilter
@@ -13,19 +13,27 @@ router = Router()
 @router.message(Command("start"), StateFilter(RegistrationStates.receiving_notifications))
 async def start_command(message: Message):
     await message.answer(
-        text="Данный телеграм-аккаунт ранее уже был использован для регистрации!",
+        text="Ваш telegram-аккаунт уже привязан.",
         reply_markup=ReplyKeyboardRemove()
     )
 
 
 @router.message(Command("start"), StateFilter(None))
 async def start_command(message: Message, state: FSMContext):
-    await message.reply("Давайте начнем регистрацию!")
-    await message.answer(
-        text="Введите код подтверждения регистрации...",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    await state.set_state(RegistrationStates.waiting_for_code)
+    is_chat_id_already_used = await AuthApi.check_chat_id(message.chat.id)
+    if is_chat_id_already_used:
+        await message.answer(
+            text="Ваш telegram-аккаунт уже привязан.",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        await state.set_state(RegistrationStates.receiving_notifications)
+    else:
+        await message.reply("Давайте начнем регистрацию!")
+        await message.answer(
+            text="Введите код подтверждения регистрации...",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        await state.set_state(RegistrationStates.waiting_for_code)
 
 
 @router.message(RegistrationStates.waiting_for_code)
@@ -45,3 +53,11 @@ async def handle_registration_code(message: Message, state: FSMContext):
         await message.answer(
             text="Неверный код подтверждения регистрации! Попробуйте снова...",
         )
+
+
+@router.message(F.text)
+async def unknown_command(message: Message):
+    await message.answer(
+        text="Данной команды не существует.",
+        reply_markup=ReplyKeyboardRemove()
+    )
