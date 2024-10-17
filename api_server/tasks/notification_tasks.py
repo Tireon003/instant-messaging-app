@@ -6,7 +6,8 @@ from api_server.config import settings
 
 celery = Celery(
     "notifications",
-    broker=settings.redis_url
+    broker=settings.redis_url,
+    broker_connection_retry_on_startup=True,
 )
 
 
