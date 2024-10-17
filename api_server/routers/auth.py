@@ -41,9 +41,7 @@ async def login_user(
     response.set_cookie(
         key="access_token",
         value=token,
-        max_age=timedelta(days=1).days,
-        secure=True,
-        httponly=True,
+        max_age=timedelta(days=1).days * 86400,
     )
 
 
