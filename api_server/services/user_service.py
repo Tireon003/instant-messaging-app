@@ -90,3 +90,8 @@ class UserService:
         if user_matched_tg_chat_id:
             return True
         return False
+
+    async def clear_session(self, user_id: int) -> None:
+        redis = await self.redis.get_connection()
+        session_key = f"{user_id}:session"
+        await redis.delete(session_key)  # todo check deletion of non-existing key
