@@ -4,6 +4,11 @@ from .user_schemas import (
     UserInsertToDB,
     UserCredentials,
 )
+from .chat_schemas import (
+    MessageCreateInDB,
+    MessageFromDB,
+)
+from .token_schemas import TokenPayload
 
 
 __all__ = (
@@ -11,4 +16,7 @@ __all__ = (
     'UserSignup',
     'UserInsertToDB',
     'UserCredentials',
+    'MessageCreateInDB',
+    'MessageFromDB',
+    'TokenPayload',
 )
