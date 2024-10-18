@@ -7,6 +7,9 @@ from .user_exceptions import (
 from .token_exceptions import (
     InvalidTokenException,
 )
+from .session_exceptions import (
+    InvalidSessionKeyException,
+)
 
 __all__ = (
     "NoSuchUserInDBException",
@@ -14,4 +17,5 @@ __all__ = (
     "InvalidTokenException",
     "UserAlreadyExistException",
     "InvalidCodeException",
+    "InvalidSessionKeyException",
 )

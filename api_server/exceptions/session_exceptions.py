@@ -1,0 +1,2 @@
+class InvalidSessionKeyException(Exception):
+    pass
