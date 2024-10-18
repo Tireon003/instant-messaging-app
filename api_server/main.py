@@ -10,6 +10,7 @@ from api_server.exceptions import (
     WrongPasswordException,
     UserAlreadyExistException,
     InvalidCodeException,
+    InvalidSessionKeyException,
 )
 
 origins = [
@@ -65,6 +66,15 @@ async def handle_invalid_code_exception(request: Request, exc: InvalidCodeExcept
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content="Invalid code provided",
+        headers={"WWW-Authenticate": "Bearer"}
+    )
+
+
+@app.exception_handler(InvalidSessionKeyException)
+async def handle_invalid_code_exception(request: Request, exc: InvalidSessionKeyException):
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content="Invalid session token provided",
         headers={"WWW-Authenticate": "Bearer"}
     )
 
