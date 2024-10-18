@@ -8,13 +8,16 @@ from fastapi import (
 from fastapi.responses import (
     JSONResponse,
 )
-from fastapi.security import OAuth2PasswordBearer
 from typing import Annotated
 from datetime import timedelta
 
-from api_server.schemas import UserLogin, UserSignup
+from api_server.schemas import UserLogin, UserSignup, TokenPayload
 from api_server.services import UserService
-from api_server.depends import get_user_service, get_login_form
+from api_server.depends import (
+    get_user_service,
+    get_login_form,
+    get_token_payload,
+)
 from api_server.core import database
 
 router = APIRouter(
@@ -22,15 +25,13 @@ router = APIRouter(
     tags=['auth'],
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-
 
 @router.post("/login", status_code=status.HTTP_200_OK)
 async def login_user(
         user_login_data: Annotated[UserLogin, Depends(get_login_form)],
         service: Annotated[UserService, Depends(get_user_service(database.get_async_session))],
 ) -> JSONResponse:
-    token = await service.login_user(user_data=user_login_data)
+    token = await service.login_user(user_data=user_login_data) #todo доавбить exp и проверку просрочки токена
     response = JSONResponse(
         status_code=status.HTTP_200_OK,
         content={
@@ -95,8 +96,13 @@ async def check_if_chat_id_used(
     return response
 
 
-@router.post("/logout")
-async def logout_user():
-    ...
-    #todo реализовать удаление токена из куки и из кеша redis
+@router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout_user(
+        response: Response,
+        service: Annotated[UserService, Depends(get_user_service(database.get_async_session))],
+        token_payload: Annotated[TokenPayload, Depends(get_token_payload)]
+) -> Response:
+    await service.clear_session(user_id=token_payload.sub)
+    response.delete_cookie("access_token")
+    return response
 
