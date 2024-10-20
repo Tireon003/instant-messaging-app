@@ -10,6 +10,9 @@ from .token_exceptions import (
 from .session_exceptions import (
     InvalidSessionKeyException,
 )
+from .chat_exceptions import (
+    ChatAlreadyExistException,
+)
 
 __all__ = (
     "NoSuchUserInDBException",
@@ -18,4 +21,5 @@ __all__ = (
     "UserAlreadyExistException",
     "InvalidCodeException",
     "InvalidSessionKeyException",
+    "ChatAlreadyExistException",
 )

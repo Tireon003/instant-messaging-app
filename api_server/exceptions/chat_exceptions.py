@@ -1,0 +1,2 @@
+class ChatAlreadyExistException(Exception):
+    pass
