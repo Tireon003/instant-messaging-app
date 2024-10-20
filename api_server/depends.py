@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import Depends, Query
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Callable, Annotated
@@ -11,10 +11,16 @@ from api_server.utils import JwtTool
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
-async def get_token_payload(
+def get_token_payload(
         access_token: Annotated[str, Depends(oauth2_scheme)]
 ) -> TokenPayload:
     payload_dict = JwtTool.read_token(access_token)
+    payload_schema = TokenPayload.model_validate(payload_dict)
+    return payload_schema
+
+
+def get_token_for_ws(token: Annotated[str, Query()]) -> TokenPayload:
+    payload_dict = JwtTool.read_token(token)
     payload_schema = TokenPayload.model_validate(payload_dict)
     return payload_schema
 
