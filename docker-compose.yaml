@@ -13,7 +13,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
     ports:
-       - ${DB_PORT}:5432
+       - 5632:${DB_PORT}
     restart: on-failure
     env_file: .env
     volumes:
