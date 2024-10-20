@@ -28,6 +28,7 @@ services:
     depends_on:
       - redis_cache
       - msg_db
+      - bot_notificator
     restart: on-failure
     env_file: .env
 
@@ -35,10 +36,18 @@ services:
     build:
       context: .
       dockerfile: bot/Dockerfile
-    depends_on:
-      - api_server
     restart: on-failure
     env_file: .env
+
+  messanger_client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    depends_on:
+      - api_server
+    ports:
+      - "5173:5173"
+    restart: on-failure
 
 volumes:
   msg_db:
