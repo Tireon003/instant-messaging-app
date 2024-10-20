@@ -22,3 +22,25 @@ class MessageFromDB(BaseMessage):
 
 class MessageFromDBIncludeRecipient(MessageFromDB):
     recipient: str
+
+
+class BaseChat(BaseModel):
+    user_1: int
+    user_2: int
+
+
+class ChatFromDB(BaseChat):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ChatCreate(BaseChat):
+    pass
+
+
+class ChatAndRecipient(BaseModel):
+    recipient_name: str
+    recipient_id: int
+    chat_id: int

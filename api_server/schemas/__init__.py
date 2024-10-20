@@ -7,6 +7,9 @@ from .user_schemas import (
 from .chat_schemas import (
     MessageCreateInDB,
     MessageFromDB,
+    ChatFromDB,
+    ChatCreate,
+    ChatAndRecipient,
 )
 from .token_schemas import TokenPayload
 
@@ -19,4 +22,7 @@ __all__ = (
     'MessageCreateInDB',
     'MessageFromDB',
     'TokenPayload',
+    'ChatFromDB',
+    'ChatCreate',
+    'ChatAndRecipient',
 )
