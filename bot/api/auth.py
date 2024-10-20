@@ -24,7 +24,7 @@ class AuthApi:
         async with aiohttp.ClientSession() as session:
             params = [("tg_chat_id", chat_id)]
             url = f"http://api_server:8777/api/auth/check_tg"
-            async with session.post(url, params=params) as response:
+            async with session.get(url, params=params) as response:
                 if response.status == 200:
                     return False
                 return True
