@@ -4,7 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
 from api_server.config import settings
-from api_server.routers import auth_router
+from api_server.routers import auth_router, chating_router
 from api_server.exceptions import (
     NoSuchUserInDBException,
     WrongPasswordException,
@@ -14,8 +14,7 @@ from api_server.exceptions import (
 )
 
 origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    "*"
 ]
 
 
@@ -32,6 +31,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(chating_router)
 
 
 @app.exception_handler(NoSuchUserInDBException)
