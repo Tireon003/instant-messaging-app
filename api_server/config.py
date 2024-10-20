@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     @property
     def db_url(self):
         return (f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@"
-                f"{self.DB_HOST}:5432/{self.DB_NAME}")
+                f"{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}")
 
     @property
     def redis_url(self):
