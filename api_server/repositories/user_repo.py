@@ -34,3 +34,7 @@ class UserRepo:
         result = await self.__session.scalars(stmt)
         user = result.one_or_none()
         return user
+
+    async def select_user(self, user_id: int) -> UsersORM | None:
+        user = await self.__session.get(UsersORM, user_id)
+        return user
