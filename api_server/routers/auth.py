@@ -86,7 +86,10 @@ async def complete_signup(
 async def check_if_chat_id_used(
         response: Response,
         tg_chat_id: Annotated[int, Query()],
-        service: Annotated[UserService, Depends(get_user_service(database.get_async_session))],
+        service: Annotated[
+            UserService,
+            Depends(get_user_service(database.get_async_session))
+        ],
 ) -> Response:
     tg_chat_id_in_db = await service.check_if_chat_id_used(tg_chat_id=tg_chat_id)
     if tg_chat_id_in_db:
@@ -104,5 +107,6 @@ async def logout_user(
 ) -> Response:
     await service.clear_session(user_id=token_payload.sub)
     response.delete_cookie("access_token")
+    response.status_code = status.HTTP_200_OK
     return response
 
