@@ -1,9 +1,12 @@
+import logging
+
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 
 from api_server.config import settings
+from api_server.logs import configure_logging
 from api_server.routers import auth_router, chating_router
 from api_server.exceptions import (
     NoSuchUserInDBException,
@@ -16,6 +19,8 @@ from api_server.exceptions import (
 origins = [
     "*"
 ]
+
+logger = logging.getLogger(__name__)
 
 
 app = FastAPI(
@@ -80,8 +85,11 @@ async def handle_invalid_code_exception(request: Request, exc: InvalidSessionKey
 
 
 if __name__ == "__main__":
+    configure_logging(level=logging.INFO)
+    logger.info("Starting uvicorn app!")
     uvicorn.run(
         app=app,
         host=settings.API_HOST,
         port=settings.API_PORT,
     )
+    logger.info("Finished uvicorn app")

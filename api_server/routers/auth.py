@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -31,7 +33,7 @@ async def login_user(
         user_login_data: Annotated[UserLogin, Depends(get_login_form)],
         service: Annotated[UserService, Depends(get_user_service(database.get_async_session))],
 ) -> JSONResponse:
-    token = await service.login_user(user_data=user_login_data) #todo доавбить exp и проверку просрочки токена
+    token = await service.login_user(user_data=user_login_data)
     response = JSONResponse(
         status_code=status.HTTP_200_OK,
         content={

@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 
 from api_server.core import Redis
 from api_server.schemas import UserLogin, UserSignup, UserInsertToDB
@@ -12,6 +13,8 @@ from api_server.exceptions import (
 )
 from api_server.utils import HashingTool, JwtTool
 
+logger = logging.getLogger(__name__)
+
 
 class UserService:
 
@@ -19,17 +22,13 @@ class UserService:
         self.redis = Redis()
         self.repo = user_repository
 
-    async def set_user_online(self, user_id):
-        redis = await self.redis.get_connection()
-        await redis.setex(
-            name=f"{user_id}:online",
-            time=5,
-            value=True,
-        )
-
     async def login_user(self, user_data: UserLogin) -> str:
         match_user = await self.repo.select_user_by_username(user_data.username)
         if not match_user:
+            logger.debug(
+                "User %s not found in database.",
+                user_data.username
+            )
             raise NoSuchUserInDBException()
         else:
             is_password_valid = HashingTool.verify(
@@ -37,6 +36,10 @@ class UserService:
                 hashed_password=match_user.hashed_password
             )
             if not is_password_valid:
+                logger.debug(
+                    "User with id: %s entered wrong password.",
+                    match_user.id
+                )
                 raise WrongPasswordException()
             else:
                 redis = await self.redis.get_connection()
@@ -51,11 +54,16 @@ class UserService:
                     time=86400,  # 24 hours in seconds
                     value=jwt_token,
                 )
+                logger.info("User with id: %s logged in.", match_user.id)
                 return jwt_token
 
     async def generate_registration_code(self, user_data: UserSignup) -> str:
         match_user = await self.repo.select_user_by_username(user_data.username)
         if match_user:
+            logger.debug(
+                "User %s already exists in database.",
+                user_data.username
+            )
             raise UserAlreadyExistException()
         else:
             payload_json = user_data.model_dump_json()
@@ -67,12 +75,21 @@ class UserService:
                 time=600,
                 value=payload_json,
             )
+            logger.info(
+                "Registration code for user: %s generated. Code: %s",
+                user_data.username,
+                base64_code_str
+            )
             return base64_code_str
 
     async def activate_user(self, code: str, tg_chat_id: int) -> None:
         redis = await self.redis.get_connection()
         user_signup_data_json_str = await redis.get(code)
         if not user_signup_data_json_str:
+            logger.info(
+                "User entered invalid code. Code: %s",
+                code
+            )
             raise InvalidCodeException()
         else:
             user_data = json.loads(user_signup_data_json_str)
@@ -84,6 +101,10 @@ class UserService:
             user_create_schema = UserInsertToDB.model_validate(user_data_for_db)
             await self.repo.insert_user(user_create_schema)
             await redis.delete(code)
+            logger.info(
+                "User %s successfully signed up.",
+                user_create_schema.username
+            )
 
     async def check_if_chat_id_used(self, tg_chat_id: int) -> bool:
         user_matched_tg_chat_id = await self.repo.select_by_tg_chat_id(tg_chat_id)
@@ -94,11 +115,16 @@ class UserService:
     async def clear_session(self, user_id: int) -> None:
         redis = await self.redis.get_connection()
         session_key = f"{user_id}:session"
-        await redis.delete(session_key)  # todo check deletion of non-existing key
+        await redis.delete(session_key)
+        logging.info(
+            "Session for user with id: %s eliminated.",
+            user_id
+        )
 
     async def get_recipient_tg_chat_id(self, user_id: int) -> int | None:
         user = await self.repo.select_user(user_id)
         if not user:
+            logger.debug("No user matched with id: %s", user_id)
             raise NoSuchUserInDBException()
         else:
             tg_chat_id = user.tg_chat_id

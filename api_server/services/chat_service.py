@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from api_server.core import Redis
@@ -15,6 +16,8 @@ from api_server.schemas import (
     ChatAndRecipient,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class ChatService:
 
@@ -26,6 +29,11 @@ class ChatService:
     async def observe_chat(self, user_id: int, chat_id: int):
         redis_conn = None
         key_user_on_chat = f"{user_id}:{chat_id}"
+        logger.debug(
+            "User with id: %s observing chat with id:",
+            user_id,
+            chat_id,
+        )
         try:
             redis_conn = await self.redis.get_connection()
             await redis_conn.set(
@@ -36,6 +44,11 @@ class ChatService:
         finally:
             if redis_conn:
                 await redis_conn.delete(key_user_on_chat)
+            logger.debug(
+                "User with id: %s stopped observing chat with id:",
+                user_id,
+                chat_id,
+            )
 
     async def send_message(self,
                            chat_id: int,
@@ -56,11 +69,20 @@ class ChatService:
         recipient_key = f"{to_user}:{chat_id}"
         recipient_online = await redis_conn.get(recipient_key)
         if not recipient_online:
+            logger.info(
+                "Sending notification to user with id: %s",
+                to_user
+            )
             send_notification_to_user.delay(
                 tg_chat_id=tg_chat_id,
                 message=message.content,
                 from_user=to_user_username,
             )
+        logger.info(
+            "User with id: %s sent message to user with id: %s",
+            owner,
+            to_user
+        )
         return message_schema.model_dump_json()
 
     async def get_chat_history(self,
@@ -70,21 +92,39 @@ class ChatService:
         session_key_in_radis = f"{user_id}:session"
         key_found = await redis_conn.get(session_key_in_radis)
         if not key_found:
+            logger.info(
+                "Session of user with id: %s not found in active sessions.",
+                user_id
+            )
             raise InvalidSessionKeyException()
         messages_orm_models = await self.repo.select_messages(chat_id)
         messages_schemas = [
             MessageFromDB.model_validate(msg) for msg in messages_orm_models
         ]
+        logger.debug(
+            "Chat history for chat with id: %s collected.",
+            chat_id
+        )
         return messages_schemas
 
     async def create_new_chat(self,
                               user_id: int,
                               with_user: int) -> ChatFromDB:
+        logger.info(
+            "Creating new chat between users with id: %s and %s.",
+            user_id,
+            with_user
+        )
         founded_chat = await self.repo.select_chat(
             user_1=user_id,
             user_2=with_user,
         )
         if founded_chat:
+            logger.info(
+                "Chat between users with id: %s and %s not created.",
+                user_id,
+                with_user
+            )
             raise ChatAlreadyExistException()
         else:
             create_chat_schema = ChatCreate.model_validate(
@@ -95,9 +135,22 @@ class ChatService:
             )
             new_chat = await self.repo.insert_chat(create_chat_schema)
             created_chat_schema = ChatFromDB.model_validate(new_chat)
+            logger.info(
+                "Chat between users with id: %s and %s created.",
+                user_id,
+                with_user
+            )
             return created_chat_schema
 
     async def get_chat_list(self,
                             user_id: int) -> list[ChatAndRecipient] | None:
+        logger.info(
+            "Getting chat list for user with id: %s...",
+            user_id
+        )
         chats = await self.repo.select_chats(user_id)
+        logger.info(
+            "Got chat list for user with id: %s.",
+            user_id
+        )
         return chats
