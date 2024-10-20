@@ -24,7 +24,7 @@ services:
       context: .
       dockerfile: api_server/Dockerfile
     ports:
-      - "8777:8777"
+      - ${API_PORT}:${API_PORT}
     depends_on:
       - redis_cache
       - msg_db
