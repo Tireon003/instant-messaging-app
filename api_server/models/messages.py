@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import text, Text, ForeignKey
+from sqlalchemy import text, String, ForeignKey
 from datetime import datetime as dt
 from typing import TYPE_CHECKING
 
@@ -10,13 +10,13 @@ if TYPE_CHECKING:
 
 class MessagesORM(Base):
     """
-    Model of table "messages"
+    Model for table 'messages'
 
-    id: unique message number
+    id: id of unique message
     chat_id: id of chat
     timestamp: timestamp of message
-    owner: id of user who sent a message
-    content: user message content
+    owner: id of message owner
+    content: text of message
     """
     __tablename__ = 'messages'
 
@@ -26,13 +26,15 @@ class MessagesORM(Base):
         nullable=False,
         index=True
     )
-    timestamp: Mapped[dt] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
+    timestamp: Mapped[dt] = mapped_column(
+        server_default=text("TIMEZONE('utc', now())")
+    )
     owner: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
         index=True
     )
-    content: Mapped[str] = mapped_column(Text, nullable=False)
+    content: Mapped[str] = mapped_column(String(500), nullable=False)
 
     chat: Mapped["ChatsORM"] = relationship(
         back_populates="history",
