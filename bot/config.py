@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     JWT_SECRET: str
 
+    LOG_LEVEL: str
+
     model_config = SettingsConfigDict(env_file=".env")
 
 

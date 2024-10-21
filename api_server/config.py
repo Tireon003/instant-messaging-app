@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     JWT_SECRET: str
 
+    LOG_LEVEL: str
+
     @property
     def db_url(self):
         return (f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@"
@@ -22,7 +24,7 @@ class Settings(BaseSettings):
 
     @property
     def redis_url(self):
-        return "redis://redis_cache:6379"  #todo name docker container redis as host named here
+        return "redis://redis_cache:6379"
 
     model_config = SettingsConfigDict(env_file=".env")
 
