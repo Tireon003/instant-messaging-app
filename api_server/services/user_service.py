@@ -16,7 +16,11 @@ from api_server.exceptions import (
     UserAlreadyExistException,
     InvalidCodeException,
 )
-from api_server.utils import HashingTool, JwtTool
+from api_server.utils import (
+    HashingTool,
+    JwtTool,
+    create_activation_code,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +63,10 @@ class UserService:
                     time=86400,  # 24 hours in seconds
                     value=jwt_token,
                 )
-                logger.info("User with id: %s logged in.", match_user.id)
+                logger.info(
+                    "User with id: %s logged in.",
+                    match_user.id
+                )
                 return jwt_token
 
     async def generate_registration_code(self, user_data: UserSignup) -> str:
@@ -72,22 +79,21 @@ class UserService:
             raise UserAlreadyExistException()
         else:
             payload_json = user_data.model_dump_json()
-            base64_code_bytes = base64.b64encode(payload_json.encode('utf-8'))
-            base64_code_str = base64_code_bytes.decode('utf-8')
+            activation_code = create_activation_code(payload_json)
             redis = await self.redis.get_connection()
             await redis.setex(
-                name=base64_code_str,
+                name=activation_code,
                 time=600,
                 value=payload_json,
             )
             logger.info(
                 "Registration code for user: %s generated. Code: %s",
                 user_data.username,
-                base64_code_str
+                activation_code
             )
-            return base64_code_str
+            return activation_code
 
-    async def activate_user(self, code: str, tg_chat_id: int) -> None:
+    async def activate_code(self, code: str, tg_chat_id: int) -> None:
         redis = await self.redis.get_connection()
         user_signup_data_json_str = await redis.get(code)
         if not user_signup_data_json_str:
@@ -98,12 +104,11 @@ class UserService:
             raise InvalidCodeException()
         else:
             user_data = json.loads(user_signup_data_json_str)
-            user_data_for_db = {
-                "tg_chat_id": tg_chat_id,
-                "username": user_data["username"],
-                "hashed_password": HashingTool.encrypt(user_data["password"])
-            }
-            user_create_schema = UserInsertToDB.model_validate(user_data_for_db)
+            user_create_schema = UserInsertToDB(
+                tg_chat_id=tg_chat_id,
+                username=user_data["username"],
+                hashed_password=HashingTool.encrypt(user_data["password"])
+            )
             await self.repo.insert_user(user_create_schema)
             await redis.delete(code)
             logger.info(
@@ -112,10 +117,8 @@ class UserService:
             )
 
     async def check_if_chat_id_used(self, tg_chat_id: int) -> bool:
-        user_matched_tg_chat_id = await self.repo.select_by_tg_chat_id(tg_chat_id)
-        if user_matched_tg_chat_id:
-            return True
-        return False
+        user_with_tg_chat_id = await self.repo.select_by_tg_chat_id(tg_chat_id)
+        return bool(user_with_tg_chat_id)
 
     async def clear_session(self, user_id: int) -> None:
         redis = await self.redis.get_connection()
@@ -126,23 +129,11 @@ class UserService:
             user_id
         )
 
-    async def get_recipient_tg_chat_id(self, user_id: int) -> int | None:
-        user = await self.repo.select_user(user_id)
-        if not user:
-            logger.debug("No user matched with id: %s", user_id)
-            raise NoSuchUserInDBException()
-        else:
-            tg_chat_id = user.tg_chat_id
-            return tg_chat_id
-
     async def get_id_from_username(self, username: str) -> int | None:
         user = await self.repo.select_user_by_username(username)
-        if user:
-            return user.id
-        else:
-            return None
+        return user.id if user else None
 
-    async def get_username(self, user_id: int) -> str | None:
-        user = await self.repo.select_user(user_id)
-        if user:
-            return user.username
+    async def get_user_from_db(self, user_id: int) -> UserFromDB | None:
+        user = await self.repo.select_user(user_id=user_id)
+        user_schema = UserFromDB.model_validate(user)
+        return user_schema
