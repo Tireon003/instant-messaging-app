@@ -13,7 +13,11 @@ celery = Celery(
 
 
 @celery.task
-def send_notification_to_user(tg_chat_id: int, message: str, from_user: str) -> None:
+def send_notification_to_user(
+        tg_chat_id: int,
+        message: str,
+        from_user: str
+) -> None:
     bot = Bot(token=settings.BOT_TOKEN)
     asyncio.run(send_message(
         bot=bot,
@@ -23,7 +27,12 @@ def send_notification_to_user(tg_chat_id: int, message: str, from_user: str) -> 
     ))
 
 
-async def send_message(bot: Bot, tg_chat_id: int, message: str, from_user: str) -> None:
+async def send_message(
+        bot: Bot,
+        tg_chat_id: int,
+        message: str,
+        from_user: str
+) -> None:
     message = (f"Пропущенное сообщение от пользователя {from_user}.\n"
                f"\n"
                f'"{message}"')

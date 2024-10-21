@@ -6,9 +6,7 @@ from .messages import MessagesORM
 
 
 class ChatsORM(Base):
-    """
-    #todo дописать доку
-    """
+
     __tablename__ = 'chats'
 
     id:  Mapped[int] = mapped_column(primary_key=True)

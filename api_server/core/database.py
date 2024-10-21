@@ -7,9 +7,12 @@ from api_server.config import settings
 
 class Database:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__engine = create_async_engine(url=settings.db_url, echo=True)
-        self.__session_maker = async_sessionmaker(self.__engine, expire_on_commit=False)
+        self.__session_maker = async_sessionmaker(
+            self.__engine,
+            expire_on_commit=False
+        )
 
     @asynccontextmanager
     async def create_async_session(self) -> AsyncSession:

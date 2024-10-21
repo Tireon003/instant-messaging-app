@@ -40,7 +40,10 @@ app.include_router(chating_router)
 
 
 @app.exception_handler(NoSuchUserInDBException)
-async def handle_no_such_user_exception(request: Request, exc: NoSuchUserInDBException):
+async def handle_no_such_user_exception(
+        request: Request,
+        exc: NoSuchUserInDBException
+) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
         content="User with such username doesn't exists",
@@ -49,16 +52,22 @@ async def handle_no_such_user_exception(request: Request, exc: NoSuchUserInDBExc
 
 
 @app.exception_handler(WrongPasswordException)
-async def handle_wrong_pass_exception(request: Request, exc: WrongPasswordException):
+async def handle_wrong_pass_exception(
+        request: Request,
+        exc: WrongPasswordException
+) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        content="User with such username doesn't exists",
+        content="User entered wrong password",
         headers={"WWW-Authenticate": "Bearer"}
     )
 
 
 @app.exception_handler(UserAlreadyExistException)
-async def handle_user_already_exist_exception(request: Request, exc: UserAlreadyExistException):
+async def handle_user_already_exist_exception(
+        request: Request,
+        exc: UserAlreadyExistException
+) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content="User with such username already exists",
@@ -67,7 +76,10 @@ async def handle_user_already_exist_exception(request: Request, exc: UserAlready
 
 
 @app.exception_handler(InvalidCodeException)
-async def handle_invalid_code_exception(request: Request, exc: InvalidCodeException):
+async def handle_invalid_code_exception(
+        request: Request,
+        exc: InvalidCodeException
+) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content="Invalid code provided",
@@ -76,7 +88,10 @@ async def handle_invalid_code_exception(request: Request, exc: InvalidCodeExcept
 
 
 @app.exception_handler(InvalidSessionKeyException)
-async def handle_invalid_code_exception(request: Request, exc: InvalidSessionKeyException):
+async def handle_invalid_code_exception(
+        request: Request,
+        exc: InvalidSessionKeyException
+) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content="Invalid session token provided",
