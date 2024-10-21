@@ -1,13 +1,14 @@
-FROM node:18
+# Используем официальный образ Nginx
+FROM nginx:latest
 
-WORKDIR /app
+# Копируем билд React приложения в директорию Nginx для обслуживания статического контента
+COPY client/dist /usr/share/nginx/html
 
-COPY client/package*.json .
+# Копируем конфигурационный файл Nginx
+COPY client/nginx.conf /etc/nginx/nginx.conf
 
-RUN npm install
+# Открываем порт 80 для внешних запросов
+EXPOSE 80
 
-COPY client .
-
-EXPOSE 5173
-
-CMD ["npm", "run", "dev"]
+# Запускаем Nginx
+CMD ["nginx", "-g", "daemon off;"]
