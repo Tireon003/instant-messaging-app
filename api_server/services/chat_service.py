@@ -14,6 +14,7 @@ from api_server.schemas import (
     ChatFromDB,
     ChatCreate,
     ChatAndRecipient,
+    UserFromDB,
 )
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class ChatService:
         self.repo = chat_repository
 
     @asynccontextmanager
-    async def observe_chat(self, user_id: int, chat_id: int):
+    async def observe_chat(self, user_id: int, chat_id: int) -> None:
         redis_conn = None
         key_user_on_chat = f"{user_id}:{chat_id}"
         logger.debug(
@@ -50,19 +51,18 @@ class ChatService:
                 chat_id,
             )
 
-    async def send_message(self,
-                           chat_id: int,
-                           message: str,
-                           owner: int,
-                           to_user: int,
-                           to_user_username: str,
-                           tg_chat_id: int) -> str:
-        message_dict = {
-            "chat_id": chat_id,
-            "owner": owner,
-            "content": message,
-        }
-        message = MessageCreateInDB.model_validate(message_dict)
+    async def send_message(
+            self,
+            chat_id: int,
+            from_user: UserFromDB,
+            to_user: UserFromDB,
+            message: str,
+    ) -> str:
+        message = MessageCreateInDB(
+            chat_id=chat_id,
+            owner=from_user.id,
+            content=message,
+        )
         message_in_db = await self.repo.insert_message(message)
         message_schema = MessageFromDB.model_validate(message_in_db)
         redis_conn = await self.redis.get_connection()
@@ -74,26 +74,28 @@ class ChatService:
                 to_user
             )
             send_notification_to_user.delay(
-                tg_chat_id=tg_chat_id,
+                tg_chat_id=to_user.tg_chat_id,
                 message=message.content,
-                from_user=to_user_username,
+                from_user=from_user.username,
             )
         logger.info(
             "User with id: %s sent message to user with id: %s",
-            owner,
-            to_user
+            from_user.id,
+            to_user.id
         )
         return message_schema.model_dump_json()
 
-    async def get_chat_history(self,
-                               chat_id: int,
-                               user_id: int) -> list[MessageFromDB] | None:
+    async def get_chat_history(
+            self,
+            chat_id: int,
+            user_id: int
+    ) -> list[MessageFromDB] | None:
         redis_conn = await self.redis.get_connection()
         session_key_in_radis = f"{user_id}:session"
         key_found = await redis_conn.get(session_key_in_radis)
         if not key_found:
             logger.info(
-                "Session of user with id: %s not found in active sessions.",
+                "Session of user with id: %s not found in session cache.",
                 user_id
             )
             raise InvalidSessionKeyException()
@@ -127,11 +129,9 @@ class ChatService:
             )
             raise ChatAlreadyExistException()
         else:
-            create_chat_schema = ChatCreate.model_validate(
-                {
-                    "user_1": user_id,
-                    "user_2": with_user,
-                }
+            create_chat_schema = ChatCreate(
+                user_1=user_id,
+                user_2=with_user,
             )
             new_chat = await self.repo.insert_chat(create_chat_schema)
             created_chat_schema = ChatFromDB.model_validate(new_chat)
@@ -142,8 +142,10 @@ class ChatService:
             )
             return created_chat_schema
 
-    async def get_chat_list(self,
-                            user_id: int) -> list[ChatAndRecipient] | None:
+    async def get_chat_list(
+            self,
+            user_id: int
+    ) -> list[ChatAndRecipient] | None:
         logger.info(
             "Getting chat list for user with id: %s...",
             user_id
