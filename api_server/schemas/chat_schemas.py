@@ -20,10 +20,6 @@ class MessageFromDB(BaseMessage):
         from_attributes = True
 
 
-class MessageFromDBIncludeRecipient(MessageFromDB):
-    recipient: str
-
-
 class BaseChat(BaseModel):
     user_1: int
     user_2: int

@@ -3,6 +3,7 @@ from .user_schemas import (
     UserSignup,
     UserInsertToDB,
     UserCredentials,
+    UserFromDB,
 )
 from .chat_schemas import (
     MessageCreateInDB,
@@ -25,4 +26,5 @@ __all__ = (
     'ChatFromDB',
     'ChatCreate',
     'ChatAndRecipient',
+    'UserFromDB',
 )

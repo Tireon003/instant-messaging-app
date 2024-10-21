@@ -20,3 +20,10 @@ class UserSignup(UserCredentials):
 class UserInsertToDB(BaseUser):
     hashed_password: str
     tg_chat_id: int
+
+
+class UserFromDB(UserInsertToDB):
+    id: int
+
+    class Config:
+        from_attributes = True
