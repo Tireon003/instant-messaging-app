@@ -18,11 +18,11 @@ from api_server.schemas import (
     ChatAndRecipient,
 )
 from api_server.services import WebSocketManager, ChatService, UserService
-from api_server.depends import (
+from api_server.dependencies import (
     get_chat_service,
     get_token_payload,
     get_user_service,
-    get_token_for_ws,
+    get_token_payload_for_ws,
 )
 
 router = APIRouter(
@@ -46,27 +46,26 @@ async def websocket_endpoint(
             UserService,
             Depends(get_user_service(database.get_async_session))
         ],
-        token_payload: Annotated[TokenPayload, Depends(get_token_for_ws)]
+        token_payload: Annotated[
+            TokenPayload,
+            Depends(get_token_payload_for_ws)
+        ],
 ):
-    from_user_id = token_payload.sub
-    tg_chat_id = await user_service.get_recipient_tg_chat_id(to_user)
-    recipient_username = await user_service.get_username(from_user_id)
-    await manager.connect(websocket, from_user_id)
-    async with chat_service.observe_chat(user_id=from_user_id, chat_id=chat_id):
+    from_user = token_payload.sub
+    await manager.connect(websocket, from_user)
+    async with chat_service.observe_chat(user_id=from_user, chat_id=chat_id):
         try:
-            while True:
-                message = (await websocket.receive_text()).strip()
-                message_json = await chat_service.send_message(
-                    chat_id=chat_id,
-                    tg_chat_id=tg_chat_id,
-                    owner=from_user_id,
-                    message=message,
-                    to_user=to_user,
-                    to_user_username=recipient_username,
-                )
+            async for message_json in manager.handle_messages(
+                websocket=websocket,
+                chat_service=chat_service,
+                user_service=user_service,
+                chat_id=chat_id,
+                from_user=from_user,
+                to_user=to_user,
+            ):
                 await manager.broadcast_personal_message(message_json, to_user)
         except WebSocketDisconnect:
-            manager.disconnect(from_user_id)
+            manager.disconnect(from_user)
 
 
 @router.get(
@@ -111,13 +110,13 @@ async def create_chat(
 ) -> ChatFromDB:
     user_id = token_payload.sub
     try:
-        with_user_id = await user_service.get_id_from_username(with_user)
-        if not with_user_id:
+        recipient_id = await user_service.get_id_from_username(with_user)
+        if not recipient_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
-        new_chat = await chat_service.create_new_chat(user_id, with_user_id)
+        new_chat = await chat_service.create_new_chat(user_id, recipient_id)
         return new_chat
     except ChatAlreadyExistException:
         raise HTTPException(
