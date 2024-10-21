@@ -3,7 +3,12 @@ import json
 import logging
 
 from api_server.core import Redis
-from api_server.schemas import UserLogin, UserSignup, UserInsertToDB
+from api_server.schemas import (
+    UserLogin,
+    UserSignup,
+    UserInsertToDB,
+    UserFromDB
+)
 from api_server.repositories import UserRepo
 from api_server.exceptions import (
     NoSuchUserInDBException,

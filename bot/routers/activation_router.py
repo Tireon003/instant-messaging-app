@@ -10,8 +10,11 @@ from bot.api import AuthApi
 router = Router()
 
 
-@router.message(Command("start"), StateFilter(RegistrationStates.receiving_notifications))
-async def start_command(message: Message):
+@router.message(
+    Command("start"),
+    StateFilter(RegistrationStates.receiving_notifications)
+)
+async def start_command(message: Message) -> None:
     await message.answer(
         text="Ваш telegram-аккаунт уже привязан.",
         reply_markup=ReplyKeyboardRemove()
@@ -19,9 +22,9 @@ async def start_command(message: Message):
 
 
 @router.message(Command("start"), StateFilter(None))
-async def start_command(message: Message, state: FSMContext):
-    is_chat_id_already_used = await AuthApi.check_chat_id(message.chat.id)
-    if is_chat_id_already_used:
+async def start_command(message: Message, state: FSMContext) -> None:
+    is_chat_id_binded = await AuthApi.check_if_chat_id_binded(message.chat.id)
+    if is_chat_id_binded:
         await message.answer(
             text="Ваш telegram-аккаунт уже привязан.",
             reply_markup=ReplyKeyboardRemove()
@@ -37,7 +40,10 @@ async def start_command(message: Message, state: FSMContext):
 
 
 @router.message(RegistrationStates.waiting_for_code)
-async def handle_registration_code(message: Message, state: FSMContext):
+async def handle_registration_code(
+        message: Message,
+        state: FSMContext
+) -> None:
     code = message.text.strip()
     completed = await AuthApi.complete_user_registration(
         code=code,
@@ -45,7 +51,8 @@ async def handle_registration_code(message: Message, state: FSMContext):
     )
     if completed:
         await message.answer(
-            text="Успешная регистрация! Теперь вы будете получаеть уведомления о пропущенных сообщениях.",
+            text="Успешная регистрация! Теперь вы будете получаеть "
+                 "уведомления о пропущенных сообщениях.",
             reply_markup=ReplyKeyboardRemove(),
         )
         await state.set_state(RegistrationStates.receiving_notifications)
@@ -56,7 +63,7 @@ async def handle_registration_code(message: Message, state: FSMContext):
 
 
 @router.message(F.text)
-async def unknown_command(message: Message):
+async def handle_unknown_command(message: Message):
     await message.answer(
         text="Данной команды не существует.",
         reply_markup=ReplyKeyboardRemove()

@@ -53,8 +53,10 @@ class ChatRepo:
         chat = result.one_or_none()
         return chat
 
-    async def select_chats(self,
-                           user_id: int) -> list[ChatAndRecipient] | None:
+    async def select_chats(
+            self,
+            user_id: int
+    ) -> list[ChatAndRecipient] | None:
         user_1_alias = aliased(UsersORM)
         user_2_alias = aliased(UsersORM)
         stmt = (
