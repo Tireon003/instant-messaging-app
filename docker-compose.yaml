@@ -5,6 +5,8 @@ services:
       - "6379:6379"
     restart: on-failure
     env_file: .env
+    networks:
+      - webnet
 
   msg_db:
     image: postgres:17.0
@@ -18,6 +20,8 @@ services:
     env_file: .env
     volumes:
       - ./pinger_db:/var/lib/postgresql/data
+    networks:
+      - webnet
 
   api_server:
     build:
@@ -31,6 +35,8 @@ services:
       - bot_notificator
     restart: on-failure
     env_file: .env
+    networks:
+      - webnet
 
   bot_notificator:
     build:
@@ -38,6 +44,8 @@ services:
       dockerfile: bot/Dockerfile
     restart: on-failure
     env_file: .env
+    networks:
+      - webnet
 
   messanger_client:
     build:
@@ -46,8 +54,13 @@ services:
     depends_on:
       - api_server
     ports:
-      - "5173:5173"
+      - "8080:80"
     restart: on-failure
+    networks:
+      - webnet
 
 volumes:
   msg_db:
+
+networks:
+  webnet:
