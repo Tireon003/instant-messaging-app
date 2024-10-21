@@ -12,7 +12,7 @@ dp.include_router(activation_router)
 
 
 async def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=settings.LOG_LEVEL)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
