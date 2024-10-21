@@ -1,0 +1,10 @@
+const SERVER_HOST = "localhost";
+
+const SERVER_PORT = 8777;
+
+window.CONSTS = {
+    SERVER_HOST: SERVER_HOST,
+    SERVER_PORT: SERVER_PORT,
+    SERVER_URL: `http://${SERVER_HOST}:${SERVER_PORT}`,
+    WS_SERVER_URL: `ws://${SERVER_HOST}:${SERVER_PORT}`,
+};
