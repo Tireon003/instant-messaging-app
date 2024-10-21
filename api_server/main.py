@@ -99,12 +99,16 @@ async def handle_invalid_code_exception(
     )
 
 
-if __name__ == "__main__":
-    configure_logging(level=logging.INFO)
-    logger.info("Starting uvicorn app!")
+def main():
+    configure_logging(level=settings.LOG_LEVEL)
+    logger.info("Starting uvicorn app")
     uvicorn.run(
         app=app,
         host=settings.API_HOST,
         port=settings.API_PORT,
     )
     logger.info("Finished uvicorn app")
+
+
+if __name__ == '__main__':
+    main()
