@@ -27,7 +27,7 @@ export const ChatsAside = () => {
     const fetchChats = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8777/api/chats/",
+          `${window.CONSTS.SERVER_URL}/api/chats/`,
           {
               withCredentials: true,
               headers: {
@@ -55,7 +55,7 @@ export const ChatsAside = () => {
     }
     try {
       const response = await axios.post(
-        `http://localhost:8777/api/chats?with_user=${username}`,
+        `${window.CONSTS.SERVER_URL}/api/chats?with_user=${username}`,
         {},
         {
             withCredentials: true,
@@ -91,7 +91,7 @@ export const ChatsAside = () => {
   };
 
   const handleLogout = async () => {
-    await axios.post('http://localhost:8777/api/auth/logout',
+    await axios.post(`${window.CONSTS.SERVER_URL}/api/auth/logout`,
     {},
     {
         withCredentials: true,

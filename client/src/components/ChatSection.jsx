@@ -13,7 +13,7 @@ export const ChatSection = () => {
   const queryParams = new URLSearchParams(location.search);
   const recipientName = queryParams.get('recipient_name');
   const recipientId = queryParams.get('id');
-  const wsUrl = `ws://localhost:8777/api/chats/${chatId}/ws?to_user=${recipientId}&token=${token}`;
+  const wsUrl = `${window.CONSTS.WS_SERVER_URL}/api/chats/${chatId}/ws?to_user=${recipientId}&token=${token}`;
   const {
       sendMessage,
       lastMessage,
@@ -47,7 +47,7 @@ export const ChatSection = () => {
   useEffect(() => {
       const fetchChatHistory = async () => {
         try {
-          const response = await axios.get(`http://localhost:8777/api/chats/${chatId}/history`, {
+          const response = await axios.get(`${window.CONSTS.SERVER_URL}/api/chats/${chatId}/history`, {
             withCredentials: true,
             headers: {
               'Authorization': 'Bearer ' + token,
@@ -106,7 +106,7 @@ export const ChatSection = () => {
                     }`}
                   >
                     <p className="text-sm">{item.owner === currentUser?.sub ? currentUser.name : recipientName}</p>
-                    <p className="text-sm">{item.content}</p>
+                    <p className="text-sm max-w-[380px]">{item.content}</p>
                     <small className="text-gray-500 mt-2">
                       {new Date(item.timestamp).toLocaleDateString('default', {
                         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,

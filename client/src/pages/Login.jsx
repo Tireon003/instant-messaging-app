@@ -13,7 +13,7 @@ function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    axios.post('http://localhost:8777/api/auth/login',
+    axios.post(`${window.CONSTS.SERVER_URL}/api/auth/login`,
     new URLSearchParams({
           username: formData.username,
           password: formData.password,

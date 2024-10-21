@@ -13,7 +13,7 @@ function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    axios.post('http://localhost:8777/api/auth/generate_code',
+    axios.post(`${window.CONSTS.SERVER_URL}/api/auth/generate_registration_code`,
     new URLSearchParams({
           username: formData.username,
           password: formData.password,
