@@ -27,6 +27,7 @@ services:
     build:
       context: .
       dockerfile: api_server/Dockerfile
+    command: bash -c "alembic upgrade head & python3 api_server/main.py"
     ports:
       - ${API_PORT}:${API_PORT}
     depends_on:
@@ -35,6 +36,18 @@ services:
       - bot_notificator
     restart: on-failure
     env_file: .env
+    networks:
+      - webnet
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: api_server/Dockerfile
+    command: celery -A api_server.tasks.notification_tasks:celery worker --loglevel=INFO
+    depends_on:
+      - redis_cache
+      - msg_db
+    restart: on-failure
     networks:
       - webnet
 
