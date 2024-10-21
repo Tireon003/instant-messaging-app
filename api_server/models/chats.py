@@ -6,7 +6,13 @@ from .messages import MessagesORM
 
 
 class ChatsORM(Base):
+    """
+    Model for table 'chats'.
 
+    id: if of the chat, integer pk
+    user_1: id of the first recipient of chat
+    user_2: id of the second recipient of chat
+    """
     __tablename__ = 'chats'
 
     id:  Mapped[int] = mapped_column(primary_key=True)

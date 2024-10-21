@@ -6,12 +6,12 @@ from .base import Base
 
 class UsersORM(Base):
     """
-    Model of table "users"
+    Model of table 'users'
 
-    id: unique user id
-    username: unique username
-    hashed_password: hashed password
-    tg_chat_id: unique id of the chat between the bot and the user for sending notifications
+    id: id of the user
+    username: user's username
+    hashed_password: user's hashed password
+    tg_chat_id: id if chat with notification telegram bot
     """
 
     __tablename__ = 'users'
