@@ -9,7 +9,7 @@ A simple service for exchanging instant messages between users in real time.
 4. Automatic notifications about missed messages from users via a telegram bot when the user is offline
 
 ### Stack
-- SPA: Vite, HTML5, JavaScript, React, Tailwind CSS, React-router, axios
+- SPA: Vite, JavaScript, React, Nginx, HTML5, Tailwind CSS, React-router, axios
 - API: Python, REST API, FastAPI, Pydantic v2, SQLAlchemy v2, Alembic, Redis, Celery, Aiogram3, WebSockets, PostgreSQL
 - Telegram bot: Aiogram3, Aiohttp
 
@@ -36,6 +36,8 @@ API_HOST=<host_for_api_server>
 API_PORT=<port_for_api_server>
 
 JWT_SECRET=<secret_key_use_difficult>
+
+LOG_LEVEL="INFO" //you can change log level if want
 ```
 6. Enter command to build and start app:
 ```shell
@@ -45,5 +47,10 @@ docker-compose up -d --build
 
 Well, now application is available on url:
 ```text
-http://locallost:5173/
+http://locallost:8080/  # react app
+http://localhost:8080/docs  # fastapi docs
 ```
+The next url's are available:
+ - /login - page for log in
+ - /register - page for sign up
+ - /chat - Main page for chatting
