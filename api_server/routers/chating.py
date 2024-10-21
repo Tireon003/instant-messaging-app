@@ -69,9 +69,12 @@ async def websocket_endpoint(
             manager.disconnect(from_user_id)
 
 
-@router.get("/{chat_id}/history",
-            status_code=200,
-            response_model=list[MessageFromDB])
+@router.get(
+    "/{chat_id}/history",
+    status_code=200,
+    response_model=list[MessageFromDB],
+    description="Getting chat history by chat id"
+)
 async def get_chat_history(
         chat_id: Annotated[int, Path()],
         service: Annotated[
@@ -88,7 +91,12 @@ async def get_chat_history(
     return messages
 
 
-@router.post("/", status_code=201, response_model=ChatFromDB)
+@router.post(
+    "/",
+    status_code=201,
+    response_model=ChatFromDB,
+    description="Creating a new chat"
+)
 async def create_chat(
         chat_service: Annotated[
             ChatService,
@@ -118,9 +126,12 @@ async def create_chat(
         )
 
 
-@router.get("/",
-            status_code=200,
-            response_model=list[ChatAndRecipient])
+@router.get(
+    "/",
+    status_code=200,
+    response_model=list[ChatAndRecipient],
+    description="Getting user's list of his chats"
+)
 async def get_chat_list(
         token_payload: Annotated[TokenPayload, Depends(get_token_payload)],
         service: Annotated[
