@@ -17,14 +17,15 @@ A simple service for exchanging instant messages between users in real time.
 
 1. Install Docker (if not installed)
 2. Install Git (if not installed)
-3. Open terminal and open the folder where you want to place the project
-4. Enter command:
+3. Create new telegram bot (via @BotFather)
+4. Open terminal and open the folder where you want to place the project
+5. Enter command:
 ```shell
 git clone https://github.com/Tireon003/instant-messaging-service
 ```
-5. Enter to project folder and create .env file. It should contain the next variables:
+6. Enter to project folder and create .env file. It should contain the next variables:
 ```editorconfig
-BOT_TOKEN=<api_key_of_your_tg_bot>
+BOT_TOKEN=<api_key_of_your_tg_bot>  // bot api key received from @BotFather
 
 DB_NAME=<database_name>
 DB_HOST=msg_db  // don't touch
@@ -39,11 +40,11 @@ JWT_SECRET=<secret_key_use_difficult>
 
 LOG_LEVEL="INFO" //you can change log level if want
 ```
-6. Enter command to build and start app:
+7. Enter command to build and start app:
 ```shell
 docker-compose up -d --build
 ```
-7. Wait for the project to be built
+8. Wait for the project to be built
 
 Well, now application is available on url:
 ```text
