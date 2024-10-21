@@ -16,10 +16,7 @@ class UserRepo:
             .filter_by(username=username)
         )
         result = await self.__session.scalar(stmt)
-        if result:
-            return result
-        else:
-            return None
+        return result
 
     async def insert_user(self, user_record: UserInsertToDB) -> None:
         new_user = UsersORM(**user_record.model_dump())
