@@ -66,12 +66,12 @@ class ChatService:
         message_in_db = await self.repo.insert_message(message)
         message_schema = MessageFromDB.model_validate(message_in_db)
         redis_conn = await self.redis.get_connection()
-        recipient_key = f"{to_user}:{chat_id}"
+        recipient_key = f"{to_user.id}:{chat_id}"
         recipient_online = await redis_conn.get(recipient_key)
         if not recipient_online:
             logger.info(
                 "Sending notification to user with id: %s",
-                to_user
+                to_user.id
             )
             send_notification_to_user.delay(
                 tg_chat_id=to_user.tg_chat_id,

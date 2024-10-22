@@ -29,4 +29,4 @@ class AuthApi:
             params = [("tg_chat_id", chat_id)]
             url = f"http://api_server:8777/api/auth/check_if_tg_is_binded"
             async with session.get(url, params=params) as response:
-                return response.status == 200
+                return response.status != 200
