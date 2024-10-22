@@ -15,9 +15,7 @@ class AuthApi:
             params = [("code", code), ("tg_chat_id", tg_chat_id)]
             url = f"http://api_server:8777/api/auth/activate_registration_code"
             async with session.post(url, params=params) as response:
-                if response.status == 201:
-                    return True
-                return False
+                return response.status == 201
 
     @staticmethod
     async def check_if_chat_id_binded(chat_id: int) -> bool:
