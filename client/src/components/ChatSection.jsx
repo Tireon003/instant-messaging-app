@@ -26,7 +26,6 @@ export const ChatSection = () => {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
-  const [messageHistory, setMessageHistory] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const chatRef = useRef(null);
 
@@ -63,17 +62,19 @@ export const ChatSection = () => {
     }, [chatId, token]);
 
   useEffect(() => {
-    if (lastMessage !== null) {
+      console.log("Получение последнего сообщения сокета")
+    if (readyState == ReadyState.OPEN && lastMessage !== null) {
         const messageObj = JSON.parse(lastMessage.data)
-        if (messageObj.chat_id === chatId) {
-            setMessageHistory((prev) => prev.concat(messageObj));
+        console.log(messageObj)
+        if (messageObj.chat_id == chatId) {
+            setChatHistory((prev) => prev.concat(messageObj));
         }
     }
-  }, [lastMessage]);
+  }, [lastMessage, readyState]);
 
   useEffect(() => {
       chatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end'});
-  }, [chatHistory, messageHistory])
+  }, [chatHistory])
 
   const handleSendMessage = (message) => {
       sendMessage(message)
@@ -89,12 +90,12 @@ export const ChatSection = () => {
 
         {/* Контейнер с прокруткой для сообщений */}
         <div className="overflow-y-auto grow p-2 flex flex-col">
-          {chatHistory.length > 0 || messageHistory.length ? (
+          {chatHistory.length > 0 ? (
             <>
               <div ref={chatRef} className="flex flex-col space-y-2">
-                {[...chatHistory, ...messageHistory].map((item) => (
+                {chatHistory.map((item) => (
                   <div
-                    key={item.timestamp}
+                    key={item.id}
                     className={`max-w-[400px] p-1 mx-2 border flex flex-col ${
                       currentUser?.sub === item.owner
                         ? 'self-end bg-blue-100'

@@ -67,10 +67,10 @@ export const ChatsAside = () => {
 
       // Если запрос успешен, обновляем список чатов (используем response.data для реальных данных)
       const newChat = response.data; // Предположим, что API возвращает новый чат
-      setChats([...chats, newChat]);
       setUsername("")
       console.log('Новый чат создан:', newChat);
       alert(`Чат с пользователем ${username} успешно создан`)
+      window.location.reload();
     } catch (error) {
       console.error('Ошибка при создании чата:', error);
       alert(`Чат  пользователем не был создан!`)
