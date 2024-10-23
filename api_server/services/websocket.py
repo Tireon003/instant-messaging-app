@@ -1,3 +1,4 @@
+import json
 from typing import Dict, AsyncGenerator
 from fastapi import WebSocket
 import logging
@@ -44,14 +45,31 @@ class WebSocketManager:
             )
             yield message_json
 
-    async def broadcast_personal_message(self, message: str, user_id: int):
-        """Отправка сообщения конкретному пользователю по его user_id."""
-        websocket = self.active_connections.get(user_id)
-        if websocket:
-            await websocket.send_text(message)
-            logger.debug("Message was sent to client %s", user_id)
+    async def broadcast_personal_message(
+            self,
+            message_json: str,
+            sender_id: int,
+            recipient_id: int,
+            chat_id: int,
+    ):
+        """Трансляция сообщения отправителю и получателю по их id"""
+        message_dict = json.loads(message_json)
+        message_for_chat_id = message_dict["chat_id"]
+        websocket_sender = self.active_connections.get(sender_id)
+        websocket_recipient = self.active_connections.get(recipient_id)
+        if websocket_sender:
+            await websocket_sender.send_text(message_json)
+            logger.debug("Message was sent to client %s", sender_id)
         else:
             logger.info(
                 "Message wasn't sent, client %s is offline.",
-                user_id
+                sender_id
+            )
+        if websocket_recipient and message_for_chat_id == chat_id:
+            await websocket_recipient.send_text(message_json)
+            logger.debug("Message was sent to client %s", recipient_id)
+        else:
+            logger.info(
+                "Message wasn't sent, client %s is offline.",
+                recipient_id
             )

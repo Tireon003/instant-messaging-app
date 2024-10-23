@@ -63,7 +63,12 @@ async def websocket_endpoint(
                 from_user=from_user,
                 to_user=to_user,
             ):
-                await manager.broadcast_personal_message(message_json, to_user)
+                await manager.broadcast_personal_message(
+                    message_json=message_json,
+                    sender_id=from_user,
+                    recipient_id=to_user,
+                    chat_id=chat_id,
+                )
         except WebSocketDisconnect:
             manager.disconnect(from_user)
 
