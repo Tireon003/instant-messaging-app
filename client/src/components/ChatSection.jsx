@@ -65,7 +65,9 @@ export const ChatSection = () => {
   useEffect(() => {
     if (lastMessage !== null) {
         const messageObj = JSON.parse(lastMessage.data)
-        setMessageHistory((prev) => prev.concat(messageObj));
+        if (messageObj.chat_id === chatId) {
+            setMessageHistory((prev) => prev.concat(messageObj));
+        }
     }
   }, [lastMessage]);
 
@@ -77,12 +79,6 @@ export const ChatSection = () => {
       sendMessage(message)
       console.log(`Я отправил ${message}`)
       setNewMessage("")
-      const date = new Date()
-      setMessageHistory([...messageHistory, {
-          timestamp: date.getTime() + date.getTimezoneOffset() * 60000,
-          owner: currentUser?.sub,
-          content: message
-      }])
   };
 
   return (
