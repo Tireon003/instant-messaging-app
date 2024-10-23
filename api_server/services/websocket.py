@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, AsyncGenerator
 from fastapi import WebSocket
 import logging
 
@@ -31,7 +31,7 @@ class WebSocketManager:
             chat_id: int,
             from_user: int,
             to_user: int,
-    ) -> None:
+    ) -> AsyncGenerator[dict, None]:
         sender_user = await user_service.get_user_from_db(from_user)
         recipient_user = await user_service.get_user_from_db(to_user)
         while True:
