@@ -23,7 +23,7 @@ export const ChatSection = () => {
     //Will attempt to reconnect on all close events, such as server shutting down
     //shouldReconnect: (closeEvent) => true,
   });
-
+  const [isOnline, setIsOnline] = useState("offline");
   const [currentUser, setCurrentUser] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -73,6 +73,20 @@ export const ChatSection = () => {
   }, [lastMessage, readyState]);
 
   useEffect(() => {
+    const checkUserStatus = async () => {
+      try {
+        const response = await axios.get(`${window.CONSTS.SERVER_URL}/api/chats/user_network_status?recipient_id=${recipientId}`);
+        setIsOnline(response.data.status);
+      } catch (error) {
+        console.error('Ошибка при проверке статуса пользователя', error);
+      }
+    };
+    checkUserStatus();
+    const intervalId = setInterval(checkUserStatus, 10000);
+    return () => clearInterval(intervalId);
+  }, [recipientId]);
+
+  useEffect(() => {
       chatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end'});
   }, [chatHistory])
 
@@ -86,8 +100,10 @@ export const ChatSection = () => {
   <div className="box-content flex flex-col border-solid border-neutral-400 border-2 w-full h-full">
     {chatId ? (
       <div className="flex flex-col h-full">
-        <h2 className="text-lg py-2 pl-4 bg-white shadow flex items-center">{recipientName}</h2>
-
+        <div className="flex justify-between items-center bg-white shadow">
+          <h2 className="text-lg py-2 pl-4 flex items-center">{recipientName}</h2>
+          <span className="text-sm text-gray-500 pr-4">{isOnline}</span>
+        </div>
         {/* Контейнер с прокруткой для сообщений */}
         <div className="overflow-y-auto grow p-2 flex flex-col">
           {chatHistory.length > 0 ? (
