@@ -6,7 +6,13 @@ from fastapi import (
     status,
     HTTPException,
 )
-from starlette.websockets import WebSocket, WebSocketDisconnect
+from fastapi.responses import (
+    JSONResponse,
+)
+from starlette.websockets import (
+    WebSocket,
+    WebSocketDisconnect,
+)
 from typing import Annotated
 
 from api_server.core import database
@@ -17,7 +23,11 @@ from api_server.schemas import (
     ChatFromDB,
     ChatAndRecipient,
 )
-from api_server.services import WebSocketManager, ChatService, UserService
+from api_server.services import (
+    WebSocketManager,
+    ChatService,
+    UserService,
+)
 from api_server.dependencies import (
     get_chat_service,
     get_token_payload,
@@ -50,7 +60,7 @@ async def websocket_endpoint(
             TokenPayload,
             Depends(get_token_payload_for_ws)
         ],
-):
+) -> None:
     from_user = token_payload.sub
     await manager.connect(websocket, from_user)
     async with chat_service.observe_chat(user_id=from_user, chat_id=chat_id):
@@ -146,3 +156,18 @@ async def get_chat_list(
     user_id = token_payload.sub
     chat_list = await service.get_chat_list(user_id)
     return chat_list
+
+
+@router.get(
+    "/user_network_status",
+    status_code=200,
+    description="Getting user's network status (online/offline)",
+)
+async def get_user_network_status(
+        recipient_id: Annotated[int, Query()],
+) -> JSONResponse:
+    online = recipient_id in manager.active_connections.keys()
+    return JSONResponse(
+        status_code=200,
+        content={"status": "online" if online else "offline"}
+    )
