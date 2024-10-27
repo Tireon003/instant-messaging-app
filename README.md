@@ -1,6 +1,6 @@
 # instant-messaging-service
 
-A simple service for exchanging instant messages between users in real time.
+A simple service for real-time messaging.
 
 ### Functionality:
 1. Authentication and authorization based on OAuth2 with JWT session tokens
