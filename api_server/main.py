@@ -17,7 +17,8 @@ from api_server.exceptions import (
 )
 
 origins = [
-    "*"
+    "http://localhost:5173",
+    "http://192.168.31.222:5173",
 ]
 
 logger = logging.getLogger(__name__)
@@ -88,7 +89,7 @@ async def handle_invalid_code_exception(
 
 
 @app.exception_handler(InvalidSessionKeyException)
-async def handle_invalid_code_exception(
+async def handle_invalid_session_key_exception(
         request: Request,
         exc: InvalidSessionKeyException
 ) -> JSONResponse:
@@ -99,7 +100,7 @@ async def handle_invalid_code_exception(
     )
 
 
-def main():
+def main() -> None:
     configure_logging(level=settings.LOG_LEVEL)
     logger.info("Starting uvicorn app")
     uvicorn.run(

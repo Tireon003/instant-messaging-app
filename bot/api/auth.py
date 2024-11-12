@@ -1,10 +1,13 @@
+from collections.abc import Sequence
+from typing import Any
+
 import aiohttp
 
 
 class AuthApi:
 
     @staticmethod
-    async def complete_user_registration(code: str, tg_chat_id) -> bool:
+    async def complete_user_registration(code: str, tg_chat_id: int) -> bool:
         """
         Method for completing user registration
         :param code: Code for user registration which bot gets from user
@@ -12,7 +15,10 @@ class AuthApi:
         :return: Boolean value: True if got status 201, False otherwise
         """
         async with aiohttp.ClientSession() as session:
-            params = [("code", code), ("tg_chat_id", tg_chat_id)]
+            params: Sequence[tuple[str, Any]] = [
+                ("code", code),
+                ("tg_chat_id", tg_chat_id),
+            ]
             url = f"http://api_server:8777/api/auth/activate_registration_code"
             async with session.post(url, params=params) as response:
                 return response.status == 201

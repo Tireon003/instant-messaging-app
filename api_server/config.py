@@ -18,12 +18,12 @@ class Settings(BaseSettings):
     LOG_LEVEL: str
 
     @property
-    def db_url(self):
+    def db_url(self) -> str:
         return (f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@"
                 f"{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}")
 
     @property
-    def redis_url(self):
+    def redis_url(self) -> str:
         return "redis://redis_cache:6379"
 
     model_config = SettingsConfigDict(env_file=".env")

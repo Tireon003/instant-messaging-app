@@ -28,10 +28,10 @@ export const ChatSection = () => {
   const [chatHistory, setChatHistory] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const chatRef = useRef(null);
+  const [unreadMessages, setUnreadMessages] = useState([]);
 
 
   useEffect(() => {
-    // Декодирование токена и установка текущего пользователя
     const getCurrentUser = () => {
       try {
         const decodedToken = jwtDecode(token);
@@ -57,7 +57,6 @@ export const ChatSection = () => {
           console.error('Ошибка при загрузке истории чата:', error);
         }
       };
-
       fetchChatHistory();
     }, [chatId, token]);
 
@@ -86,6 +85,47 @@ export const ChatSection = () => {
     return () => clearInterval(intervalId);
   }, [recipientId]);
 
+    useEffect(() => {
+        const checkMessagesIsRead = async () => {
+            console.log("Проверяем, есть ли непрочитанные сообщения")
+            const currentUnreadMessages = chatHistory.filter(message =>
+                message.is_read === false && message.owner === currentUser.sub
+            );
+            const listsAreDifferent =
+                currentUnreadMessages.length !== unreadMessages.length ||
+                currentUnreadMessages.some(
+                    newMessage => !unreadMessages.some(oldMessage => oldMessage.id === newMessage.id)
+                );
+            if (listsAreDifferent) {
+                setUnreadMessages(currentUnreadMessages);
+            }
+            if (unreadMessages.length > 0) {
+                const messageIds = unreadMessages.map(msg => msg.id);
+                try {
+                    const response = await axios.post(`${window.CONSTS.SERVER_URL}/api/chats/get_read_status`, messageIds);
+                    const readStatus = response.data;
+                    const hasReadUpdates = Object.values(readStatus).some(status => status === true);
+
+                    if (hasReadUpdates) {
+                        setChatHistory(prevChatHistory =>
+                            prevChatHistory.map(message => ({
+                                ...message,
+                                is_read: readStatus[message.id] ? readStatus[message.id] : message.is_read
+                            }))
+                        );
+                    } else {
+                        console.log("Нет обновлений статуса прочтения, chatHistory не будет изменен.");
+                    }
+                } catch (error) {
+                    console.error('Error fetching message read status:', error);
+                }
+            }
+        };
+        checkMessagesIsRead();
+        const intervalCheckRead = setInterval(checkMessagesIsRead, 3000);
+        return () => clearInterval(intervalCheckRead);
+    }, [currentUser, unreadMessages, chatHistory]);
+
   useEffect(() => {
       chatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end'});
   }, [chatHistory])
@@ -106,7 +146,7 @@ export const ChatSection = () => {
         </div>
         {/* Контейнер с прокруткой для сообщений */}
         <div className="overflow-y-auto grow p-2 flex flex-col">
-          {chatHistory.length > 0 ? (
+          {chatHistory ? (
             <>
               <div ref={chatRef} className="flex flex-col space-y-2">
                 {chatHistory.map((item) => (
@@ -120,20 +160,36 @@ export const ChatSection = () => {
                   >
                     <p className="text-sm">{item.owner === currentUser?.sub ? currentUser.name : recipientName}</p>
                     <p className="text-sm max-w-[380px]">{item.content}</p>
-                    <small className="text-gray-500 mt-2">
-                      {new Date(item.timestamp).toLocaleDateString('default', {
-                        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                      })}{' '}
-                      {new Date(item.timestamp).toLocaleTimeString('default', {
-                        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false,
-                      })}
-                    </small>
+                    <div className="flex items-center justify-between space-x-2">
+                        <small className="text-gray-500 mt-2">
+                          {new Date(item.timestamp).toLocaleDateString('default', {
+                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                          })}{' '}
+                          {new Date(item.timestamp).toLocaleTimeString('default', {
+                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                          })}
+                        </small>
+                        <div>
+                            {item.owner === currentUser?.sub ? (
+                                <small className="flex items-center mt-2">
+                                    {item.is_read ? (
+                                        <svg className="h-5 w-5 text-green-500"  width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <path d="M7 12l5 5l10 -10" />  <path d="M2 12l5 5m5 -5l5 -5" /></svg>
+                                    ) : (
+                                        <svg className="h-5 w-5 text-gray-400"  width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <path d="M5 12l5 5l10 -10" /></svg>
+                                    )
+                                    }
+                                </small>
+                            ) : (
+                                <div></div>
+                            )}
+                        </div>
+                    </div>
                   </div>
                 ))}
               </div>

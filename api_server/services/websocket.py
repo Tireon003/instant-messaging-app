@@ -1,5 +1,5 @@
 import json
-from typing import Dict, AsyncGenerator
+from typing import AsyncGenerator
 from fastapi import WebSocket
 import logging
 
@@ -9,16 +9,16 @@ logger = logging.getLogger(__name__)
 
 
 class WebSocketManager:
-    def __init__(self):
-        self.active_connections: Dict[int, WebSocket] = {}
+    def __init__(self) -> None:
+        self.active_connections: dict[int, WebSocket] = {}
 
-    async def connect(self, websocket: WebSocket, user_id: int):
+    async def connect(self, websocket: WebSocket, user_id: int) -> None:
         """Подключение нового WebSocket соединения по user_id."""
         await websocket.accept()
         self.active_connections[user_id] = websocket
         logger.info("User %s connected.", user_id)
 
-    def disconnect(self, user_id: int):
+    def disconnect(self, user_id: int) -> None:
         """Отключение WebSocket соединения для конкретного user_id."""
         if user_id in self.active_connections:
             del self.active_connections[user_id]
@@ -32,7 +32,7 @@ class WebSocketManager:
             chat_id: int,
             from_user: int,
             to_user: int,
-    ) -> AsyncGenerator[dict, None]:
+    ) -> AsyncGenerator[str, None]:
         sender_user = await user_service.get_user_from_db(from_user)
         recipient_user = await user_service.get_user_from_db(to_user)
         while True:
@@ -51,7 +51,7 @@ class WebSocketManager:
             sender_id: int,
             recipient_id: int,
             chat_id: int,
-    ):
+    ) -> None:
         """Трансляция сообщения отправителю и получателю по их id"""
         message_dict = json.loads(message_json)
         message_for_chat_id = message_dict["chat_id"]

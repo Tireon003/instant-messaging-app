@@ -9,9 +9,9 @@ from .auth import (
 )
 
 __all__ = (
-    get_chat_service,
-    get_user_service,
-    get_token_payload,
-    get_token_payload_for_ws,
-    get_login_form,
+    'get_chat_service',
+    'get_user_service',
+    'get_token_payload',
+    'get_token_payload_for_ws',
+    'get_login_form',
 )

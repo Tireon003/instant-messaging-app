@@ -129,11 +129,15 @@ class UserService:
             user_id
         )
 
-    async def get_id_from_username(self, username: str) -> int | None:
+    async def get_id_from_username(self, username: str) -> int:
         user = await self.repo.select_user_by_username(username)
-        return user.id if user else None
+        if not user:
+            raise NoSuchUserInDBException()
+        return user.id
 
-    async def get_user_from_db(self, user_id: int) -> UserFromDB | None:
+    async def get_user_from_db(self, user_id: int) -> UserFromDB:
         user = await self.repo.select_user(user_id=user_id)
+        if not user:
+            raise NoSuchUserInDBException()
         user_schema = UserFromDB.model_validate(user)
         return user_schema

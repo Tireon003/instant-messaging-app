@@ -1,4 +1,5 @@
 import logging
+from collections.abc import AsyncIterator
 from typing import AsyncGenerator
 
 from redis import asyncio as aioredis
@@ -16,8 +17,8 @@ class Redis:
     REDIS_URL = settings.redis_url
 
     @asynccontextmanager
-    async def create_connection(self) -> AsyncGenerator[RedisInstance, None]:
-        connection = await aioredis.from_url(self.REDIS_URL)
+    async def create_connection(self) -> AsyncIterator[RedisInstance]:
+        connection = await aioredis.from_url(self.REDIS_URL)  # type: ignore
         yield connection
         await connection.close()
 

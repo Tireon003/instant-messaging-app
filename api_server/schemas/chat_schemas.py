@@ -6,6 +6,7 @@ class BaseMessage(BaseModel):
     content: str = Field(min_length=1)
     owner: int
     chat_id: int
+    is_read: bool
 
 
 class MessageCreateInDB(BaseMessage):

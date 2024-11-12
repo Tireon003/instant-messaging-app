@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import {ChatsAside} from '../components/ChatsAside'
@@ -7,15 +7,6 @@ import {ChatSection} from '../components/ChatSection'
 function Chat() {
 
   const token = Cookies.get('access_token');
-
-
-  const handleSendMessage = () => {
-    console.log("send message")
-  };
-
-  const scrollToBottom = () => {
-    chatBox.current.scrollTop = chatBox.current.scrollHeight;
-  };
 
   return (
     <div className="flex box-content justify-center items-center h-screen min-w-[800px]">

@@ -1,4 +1,4 @@
-const SERVER_HOST = "localhost";
+const SERVER_HOST = "192.168.31.222";
 
 const SERVER_PORT = 8777;
 
