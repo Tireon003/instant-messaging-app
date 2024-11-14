@@ -28,4 +28,4 @@ class JwtTool:
             )
             return payload
         except jwt.InvalidTokenError:
-            raise InvalidTokenException()
+            raise InvalidTokenException()  #todo добавить обработку этого исключения

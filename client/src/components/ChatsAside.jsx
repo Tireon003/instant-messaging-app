@@ -1,119 +1,62 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import Cookies from 'js-cookie';
-import { jwtDecode } from 'jwt-decode';
+import {useUser} from "../hooks/useUser.js";
+import {createNewChat, fetchUserChats} from "../api/chats.js";
+import {logoutUser} from "../api/auth.js";
 
 
 export const ChatsAside = () => {
   const [username, setUsername] = useState('');
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, token] = useUser();
   const [chats, setChats] = useState([]);
   const navigate = useNavigate();
-  const token = Cookies.get('access_token');
 
   useEffect(() => {
-    const getCurrentUser = () => {
-      try {
-        const decodedToken = jwtDecode(token);
-        setCurrentUser(decodedToken);
-        console.log("CurrentUser updated:", decodedToken);
-      } catch (error) {
-        console.error("Error decoding JWT:", error);
-        document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+      const fetchChats = async () => {
+          const chats = await fetchUserChats(token);
+          setChats(chats);
+      };
+
+      fetchChats();
+  }, [token]);
+
+  const createChat = async (username, token) => {
+      if (username === currentUser?.name) {
+          alert("Невозможно начать чат с самим собой!")
+          return
       }
-    };
-
-    const fetchChats = async () => {
-      try {
-        const response = await axios.get(
-          `${window.CONSTS.SERVER_URL}/api/chats/`,
-          {
-              withCredentials: true,
-              headers: {
-                  'Authorization': 'Bearer ' + token,
-              }
-          }
-        );
-
-        setChats(response.data);
-      } catch (err) {
-        console.error('Ошибка при получении чатов:', err);
-        // Здесь можно добавить дополнительную логику обработки ошибок
+      const newChat = await createNewChat(username, token);
+      if (newChat !== null) {
+          setChats([...chats, {
+              chat_id: newChat["id"],
+              recipient_name: username,
+              recipient_id: newChat["user_2"]
+          }]);
+          alert(`Чат с пользователем ${username} успешно создан`)
+      } else {
+          alert("Ошибка при создании нового чата.")
       }
-    };
-
-    getCurrentUser();
-    fetchChats()
-  }, []);
-
-  // Макет функции для создания нового чата
-  const createChat = async (username) => {
-    if (username.trim() === currentUser?.name) {
-        alert("Невозможно начать чат с самим собой!")
-        return
-    }
-    try {
-      const response = await axios.post(
-        `${window.CONSTS.SERVER_URL}/api/chats?with_user=${username}`,
-        {},
-        {
-            withCredentials: true,
-            headers: {
-                'Authorization': 'Bearer ' + token,
-            }
-        }
-      );
-
-      // Если запрос успешен, обновляем список чатов (используем response.data для реальных данных)
-      const newChat = response.data; // Предположим, что API возвращает новый чат
-      setUsername("")
-      console.log('Новый чат создан:', newChat);
-      alert(`Чат с пользователем ${username} успешно создан`)
-      window.location.reload();
-    } catch (error) {
-      console.error('Ошибка при создании чата:', error);
-      alert(`Чат  пользователем не был создан!`)
-    }
   };
 
   const handleChatClick = (chatId, recipientName, recipientId) => {
       navigate(`/chat/${chatId}?recipient_name=${encodeURIComponent(recipientName)}&id=${encodeURIComponent(recipientId)}`);
   };
 
-  const handleCreateChat = () => {
-    if (username.trim()) {
-      createChat(username); // Вызываем функцию создания чата
-      setUsername(''); // Очищаем поле ввода
-    } else {
-      console.log('Введите имя пользователя');
-    }
+  const handleCreateChat = async () => {
+      if (username.trim()) {
+          await createChat(username.trim(), token);
+          setUsername('');
+      } else {
+          alert('Введите имя пользователя и повторите снова.');
+      }
   };
 
   const handleLogout = async () => {
-    await axios.post(`${window.CONSTS.SERVER_URL}/api/auth/logout`,
-    {},
-    {
-        withCredentials: true,
-        headers: {
-            'Authorization': 'Bearer ' + token,
-        }
-    })
-    .then(res => {
-        if (res.status === 200) {
-            window.location.reload();
-        }
-    })
-    .catch(err => {
-        if (err.status === 401) {
-            console.log("You are not authenticated")
-        }
-    })
+      await logoutUser(token);
   }
 
   return (
     <div className="max-w-64 min-w-64 grow border-solid border-2 border-neutral-400 flex flex-col">
-      {/* Модуль для создания нового чата */}
       <div className="p-2 border-b-2 border-neutral-400">
         <input
           type="text"
@@ -129,8 +72,6 @@ export const ChatsAside = () => {
           +
         </button>
       </div>
-
-      {/* Список чатов с прокруткой */}
       <ul className="overflow-y-auto flex-grow">
         {chats.map((chat) => (
           <li

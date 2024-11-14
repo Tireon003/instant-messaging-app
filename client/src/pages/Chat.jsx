@@ -1,12 +1,7 @@
-import React from 'react';
-import axios from 'axios';
-import Cookies from 'js-cookie';
 import {ChatsAside} from '../components/ChatsAside'
 import {ChatSection} from '../components/ChatSection'
 
 function Chat() {
-
-  const token = Cookies.get('access_token');
 
   return (
     <div className="flex box-content justify-center items-center h-screen min-w-[800px]">

@@ -130,7 +130,7 @@ class ChatService:
             )
             raise ChatAlreadyExistException()
         else:
-            create_chat_schema = ChatCreate(
+            create_chat_schema = ChatCreate(  # todo задокументировать, кто такой user_1 и user_2
                 user_1=user_id,
                 user_2=with_user,
             )

@@ -1,123 +1,91 @@
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import Cookies from 'js-cookie';
-import {jwtDecode} from 'jwt-decode';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
-import axios from 'axios';
+import {useUser} from "../hooks/useUser.js";
+import {fetchChatHistory, refreshMessagesStatus} from "../api/chats.js";
+import {fetchRecipientStatus} from "../api/users.js";
+import {useRecipient} from "../hooks/useRecipient.js";
+import Message from "./ui/Message.jsx";
 
 
 export const ChatSection = () => {
-  const { chatId } = useParams();
-  const token = Cookies.get('access_token');
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const recipientName = queryParams.get('recipient_name');
-  const recipientId = queryParams.get('id');
+  const {chatId } = useParams();
+  const [currentUser, token] = useUser();
+  const { recipientId, recipientName } = useRecipient();
   const wsUrl = `${window.CONSTS.WS_SERVER_URL}/api/chats/${chatId}/ws?to_user=${recipientId}&token=${token}`;
   const {
       sendMessage,
       lastMessage,
-      readyState
-  } = useWebSocket(wsUrl, {
-    onOpen: () => console.log('opened'),
-    //Will attempt to reconnect on all close events, such as server shutting down
-    //shouldReconnect: (closeEvent) => true,
-  });
+      readyState,
+  } = useWebSocket(
+      wsUrl,
+      {
+          onOpen: () => console.debug('WS connection established'),
+          shouldReconnect: (closeEvent) => true,
+          reconnectAttempts: 5,
+          reconnectInterval: 1000,
+      });
   const [isOnline, setIsOnline] = useState("offline");
-  const [currentUser, setCurrentUser] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const chatRef = useRef(null);
   const [unreadMessages, setUnreadMessages] = useState([]);
-
+  const chatRef = useRef(null);
 
   useEffect(() => {
-    const getCurrentUser = () => {
-      try {
-        const decodedToken = jwtDecode(token);
-        setCurrentUser(decodedToken);
-      } catch (error) {
+      const fetchData = async () => {
+          const history = await fetchChatHistory(chatId, token);
+          setChatHistory(history);
       }
-    };
 
-    getCurrentUser();
-  }, [token]);
-
-  useEffect(() => {
-      const fetchChatHistory = async () => {
-        try {
-          const response = await axios.get(`${window.CONSTS.SERVER_URL}/api/chats/${chatId}/history`, {
-            withCredentials: true,
-            headers: {
-              'Authorization': 'Bearer ' + token,
-            }
-          });
-          setChatHistory(response.data);
-        } catch (error) {
-          console.error('Ошибка при загрузке истории чата:', error);
-        }
-      };
-      fetchChatHistory();
-    }, [chatId, token]);
+      if (chatId) fetchData();
+  }, [chatId, token]);
 
   useEffect(() => {
-      console.log("Получение последнего сообщения сокета")
-    if (readyState == ReadyState.OPEN && lastMessage !== null) {
-        const messageObj = JSON.parse(lastMessage.data)
-        console.log(messageObj)
-        if (messageObj.chat_id == chatId) {
-            setChatHistory((prev) => prev.concat(messageObj));
-        }
-    }
-  }, [lastMessage, readyState]);
-
-  useEffect(() => {
-    const checkUserStatus = async () => {
-      try {
-        const response = await axios.get(`${window.CONSTS.SERVER_URL}/api/chats/user_network_status?recipient_id=${recipientId}`);
-        setIsOnline(response.data.status);
-      } catch (error) {
-        console.error('Ошибка при проверке статуса пользователя', error);
+      console.debug("Обработка последнего сообщения из ws")
+      if (readyState === ReadyState.OPEN && lastMessage !== null) {
+          const messageObj = JSON.parse(lastMessage.data)
+          if (messageObj["chat_id"] === parseInt(chatId)) {
+              setChatHistory((prev) => prev.concat(messageObj));
+          }
       }
-    };
-    checkUserStatus();
-    const intervalId = setInterval(checkUserStatus, 10000);
-    return () => clearInterval(intervalId);
+  }, [chatId, lastMessage, readyState]);
+
+  useEffect(() => {
+      const checkUserStatus = async () => {
+          const status = await fetchRecipientStatus(recipientId);
+          setIsOnline(status);
+      }
+      if (recipientId) checkUserStatus();
+      const intervalId = setInterval(checkUserStatus, 10000);
+      return () => clearInterval(intervalId);
   }, [recipientId]);
 
     useEffect(() => {
         const checkMessagesIsRead = async () => {
-            console.log("Проверяем, есть ли непрочитанные сообщения")
             const currentUnreadMessages = chatHistory.filter(message =>
-                message.is_read === false && message.owner === currentUser.sub
+                message["is_read"] === false && message["owner"] === currentUser["sub"]
             );
             const listsAreDifferent =
                 currentUnreadMessages.length !== unreadMessages.length ||
                 currentUnreadMessages.some(
-                    newMessage => !unreadMessages.some(oldMessage => oldMessage.id === newMessage.id)
+                    newMessage => !unreadMessages.some(oldMessage => oldMessage["id"] === newMessage["id"])
                 );
             if (listsAreDifferent) {
                 setUnreadMessages(currentUnreadMessages);
             }
             if (unreadMessages.length > 0) {
-                const messageIds = unreadMessages.map(msg => msg.id);
-                try {
-                    const response = await axios.post(`${window.CONSTS.SERVER_URL}/api/chats/get_read_status`, messageIds);
-                    const readStatus = response.data;
-                    const hasReadUpdates = Object.values(readStatus).some(status => status === true);
-
-                    if (hasReadUpdates) {
-                        setChatHistory(prevChatHistory =>
-                            prevChatHistory.map(message => ({
-                                ...message,
-                                is_read: readStatus[message.id] ? readStatus[message.id] : message.is_read
-                            }))
-                        );
-                    } else {
-                        console.log("Нет обновлений статуса прочтения, chatHistory не будет изменен.");
-                    }
-                } catch (error) {
-                    console.error('Error fetching message read status:', error);
+                const messageIds = unreadMessages.map(msg => msg["id"]);
+                const readStatus = await refreshMessagesStatus(messageIds);
+                const hasReadUpdates = Object.values(readStatus).some(status => status === true);
+                if (hasReadUpdates) {
+                    setChatHistory(prevChatHistory => prevChatHistory.map(
+                        message => ({
+                            ...message,
+                            is_read: readStatus[message["id"]] ? readStatus[message["id"]] : message["is_read"]
+                        }))
+                    );
+                } else {
+                    console.debug("Нет обновлений статуса прочтения, chatHistory не будет изменен.");
                 }
             }
         };
@@ -132,7 +100,7 @@ export const ChatSection = () => {
 
   const handleSendMessage = (message) => {
       sendMessage(message)
-      console.log(`Я отправил ${message}`)
+      console.debug(`Отправлено сообщение с текстом: ${message}`)
       setNewMessage("")
   };
 
@@ -150,47 +118,11 @@ export const ChatSection = () => {
             <>
               <div ref={chatRef} className="flex flex-col space-y-2">
                 {chatHistory.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`max-w-[400px] p-1 mx-2 border flex flex-col ${
-                      currentUser?.sub === item.owner
-                        ? 'self-end bg-blue-100'
-                        : 'self-start bg-gray-100'
-                    }`}
-                  >
-                    <p className="text-sm">{item.owner === currentUser?.sub ? currentUser.name : recipientName}</p>
-                    <p className="text-sm max-w-[380px]">{item.content}</p>
-                    <div className="flex items-center justify-between space-x-2">
-                        <small className="text-gray-500 mt-2">
-                          {new Date(item.timestamp).toLocaleDateString('default', {
-                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                          })}{' '}
-                          {new Date(item.timestamp).toLocaleTimeString('default', {
-                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false,
-                          })}
-                        </small>
-                        <div>
-                            {item.owner === currentUser?.sub ? (
-                                <small className="flex items-center mt-2">
-                                    {item.is_read ? (
-                                        <svg className="h-5 w-5 text-green-500"  width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <path d="M7 12l5 5l10 -10" />  <path d="M2 12l5 5m5 -5l5 -5" /></svg>
-                                    ) : (
-                                        <svg className="h-5 w-5 text-gray-400"  width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">  <path stroke="none" d="M0 0h24v24H0z"/>  <path d="M5 12l5 5l10 -10" /></svg>
-                                    )
-                                    }
-                                </small>
-                            ) : (
-                                <div></div>
-                            )}
-                        </div>
-                    </div>
-                  </div>
+                  <Message
+                      currentUser={currentUser}
+                      recipientName={recipientName}
+                      messageData={item}
+                  />
                 ))}
               </div>
             </>
@@ -209,7 +141,7 @@ export const ChatSection = () => {
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Введите сообщение..."
             className="flex-grow p-2 border rounded-lg"
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(newMessage)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)}
           />
           <button
             onClick={() => handleSendMessage(newMessage)}
