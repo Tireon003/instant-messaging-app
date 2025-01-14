@@ -1,6 +1,6 @@
-# instant-messaging-service
+# instant-messaging-app
 
-A simple service for real-time messaging.
+It's a completed full stack application for real-time messaging. The app provides users an opportunity to create profiles, create chats with others, exchange messages, see recipient's network status, see message's status.
 
 ### Functionality:
 1. Authentication and authorization based on OAuth2 with JWT session tokens
@@ -13,7 +13,7 @@ A simple service for real-time messaging.
 - API: Python, REST API, FastAPI, Pydantic v2, SQLAlchemy v2, Alembic, Redis, Celery, Aiogram3, WebSockets, PostgreSQL
 - Telegram bot: Aiogram3, Aiohttp
 
-### How to run
+### How to run locally
 
 1. Install Docker (if not installed)
 2. Install Git (if not installed)
