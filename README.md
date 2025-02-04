@@ -48,7 +48,7 @@ docker-compose up -d --build
 
 Well, now application is available on url:
 ```text
-http://locallost:8080/  # react app
+http://localhost:8080/  # react app
 http://localhost:8080/docs  # fastapi docs
 ```
 The next url's are available:
